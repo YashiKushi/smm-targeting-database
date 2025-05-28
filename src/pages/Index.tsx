@@ -5,7 +5,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Icon from "@/components/ui/icon";
+import CampaignManager from "@/components/CampaignManager";
+import { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -19,6 +22,8 @@ import {
   PieChart,
   Pie,
   Cell,
+  AreaChart,
+  Area,
 } from "recharts";
 
 // Мокированные данные для демонстрации
@@ -106,18 +111,62 @@ const activeCampaigns = [
 ];
 
 const Index = () => {
+  const [activeView, setActiveView] = useState<'dashboard' | 'campaigns'>('dashboard');
+  const [selectedPeriod, setSelectedPeriod] = useState('month');
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Заголовок */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            SMM Центр Управления
-          </h1>
-          <p className="text-lg text-gray-600">
-            Управление таргетированной рекламой и аналитика
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50">
+      {/* Навигация */}
+      <nav className="bg-white shadow-sm border-b p-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Icon name="Target" size={28} className="text-purple-600" />
+            <h1 className="text-xl font-bold text-gray-900">SMM Control</h1>
+          </div>
+          <div className="flex space-x-2">
+            <Button 
+              variant={activeView === 'dashboard' ? 'default' : 'outline'}
+              onClick={() => setActiveView('dashboard')}
+              size="sm"
+            >
+              <Icon name="BarChart3" size={16} className="mr-2" />
+              Дашборд
+            </Button>
+            <Button 
+              variant={activeView === 'campaigns' ? 'default' : 'outline'}
+              onClick={() => setActiveView('campaigns')}
+              size="sm"
+            >
+              <Icon name="Settings" size={16} className="mr-2" />
+              Кампании
+            </Button>
+          </div>
         </div>
+      </nav>
+
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {activeView === 'dashboard' ? (
+            <>
+              {/* Фильтр периода */}
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Аналитика кампаний</h2>
+                  <p className="text-gray-600">Мониторинг эффективности рекламы</p>
+                </div>
+                <div className="flex space-x-2">
+                  {['week', 'month', 'quarter'].map((period) => (
+                    <Button
+                      key={period}
+                      variant={selectedPeriod === period ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedPeriod(period)}
+                    >
+                      {period === 'week' ? 'Неделя' : period === 'month' ? 'Месяц' : 'Квартал'}
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
         {/* Основные метрики */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
