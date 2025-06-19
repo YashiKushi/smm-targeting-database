@@ -81,35 +81,81 @@ const CampaignManager = () => {
     platform: "",
     startDate: "",
     endDate: "",
+    dailyBudget: "",
+    targetCPA: "",
+    expectedReach: "",
   });
 
-  const handleCreateCampaign = () => {
-    if (newCampaign.name && newCampaign.budget) {
-      const campaign: Campaign = {
-        id: campaigns.length + 1,
-        name: newCampaign.name,
-        status: "Активна",
-        budget: Number(newCampaign.budget),
-        spent: 0,
-        audience: newCampaign.audience || "Не указано",
-        startDate:
-          newCampaign.startDate || new Date().toISOString().split("T")[0],
-        endDate: newCampaign.endDate || new Date().toISOString().split("T")[0],
-        objective: newCampaign.objective || "Конверсии",
-        platform: newCampaign.platform || "Facebook",
-      };
-      setCampaigns([...campaigns, campaign]);
-      setNewCampaign({
-        name: "",
-        budget: "",
-        audience: "",
-        objective: "",
-        platform: "",
-        startDate: "",
-        endDate: "",
-      });
-      setShowCreateForm(false);
+  // Автоматический расчет бюджета
+  const calculateBudget = () => {
+    const { dailyBudget, startDate, endDate, targetCPA, expectedReach } =
+      newCampaign;
+
+    if (dailyBudget && startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const days = Math.ceil(
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+      );
+      const totalBudget = Number(dailyBudget) * Math.max(days, 1);
+
+      setNewCampaign((prev) => ({ ...prev, budget: totalBudget.toString() }));
+    } else if (targetCPA && expectedReach) {
+      const estimatedBudget = Number(targetCPA) * Number(expectedReach);
+      setNewCampaign((prev) => ({
+        ...prev,
+        budget: estimatedBudget.toString(),
+      }));
     }
+  };
+
+  // Валидация формы
+  const validateForm = () => {
+    const errors = [];
+    if (!newCampaign.name.trim()) errors.push("Название кампании обязательно");
+    if (!newCampaign.budget || Number(newCampaign.budget) <= 0)
+      errors.push("Бюджет должен быть больше 0");
+    if (!newCampaign.platform) errors.push("Выберите платформу");
+    if (!newCampaign.objective) errors.push("Выберите цель кампании");
+
+    if (errors.length > 0) {
+      alert(errors.join("\n"));
+      return false;
+    }
+    return true;
+  };
+
+  const handleCreateCampaign = () => {
+    if (!validateForm()) return;
+
+    const campaign: Campaign = {
+      id: campaigns.length + 1,
+      name: newCampaign.name,
+      status: "Активна",
+      budget: Number(newCampaign.budget),
+      spent: 0,
+      audience: newCampaign.audience || "Не указано",
+      startDate:
+        newCampaign.startDate || new Date().toISOString().split("T")[0],
+      endDate: newCampaign.endDate || new Date().toISOString().split("T")[0],
+      objective: newCampaign.objective,
+      platform: newCampaign.platform,
+    };
+
+    setCampaigns([...campaigns, campaign]);
+    setNewCampaign({
+      name: "",
+      budget: "",
+      audience: "",
+      objective: "",
+      platform: "",
+      startDate: "",
+      endDate: "",
+      dailyBudget: "",
+      targetCPA: "",
+      expectedReach: "",
+    });
+    setShowCreateForm(false);
   };
 
   const toggleCampaignStatus = (id: number) => {
@@ -177,96 +223,194 @@ const CampaignManager = () => {
               Заполните данные для создания рекламной кампании
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Название кампании</Label>
-                <Input
-                  id="name"
-                  value={newCampaign.name}
-                  onChange={(e) =>
-                    setNewCampaign({ ...newCampaign, name: e.target.value })
-                  }
-                  placeholder="Введите название"
-                />
-              </div>
-              <div>
-                <Label htmlFor="budget">Бюджет (₽)</Label>
-                <Input
-                  id="budget"
-                  type="number"
-                  value={newCampaign.budget}
-                  onChange={(e) =>
-                    setNewCampaign({ ...newCampaign, budget: e.target.value })
-                  }
-                  placeholder="25000"
-                />
-              </div>
-              <div>
-                <Label htmlFor="audience">Целевая аудитория</Label>
-                <Input
-                  id="audience"
-                  value={newCampaign.audience}
-                  onChange={(e) =>
-                    setNewCampaign({ ...newCampaign, audience: e.target.value })
-                  }
-                  placeholder="Женщины 25-35"
-                />
-              </div>
-              <div>
-                <Label htmlFor="platform">Платформа</Label>
-                <Select
-                  value={newCampaign.platform}
-                  onValueChange={(value) =>
-                    setNewCampaign({ ...newCampaign, platform: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите платформу" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Facebook">Facebook</SelectItem>
-                    <SelectItem value="Instagram">Instagram</SelectItem>
-                    <SelectItem value="VK">VK</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="objective">Цель кампании</Label>
-                <Select
-                  value={newCampaign.objective}
-                  onValueChange={(value) =>
-                    setNewCampaign({ ...newCampaign, objective: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите цель" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Конверсии">Конверсии</SelectItem>
-                    <SelectItem value="Охват">Охват</SelectItem>
-                    <SelectItem value="Трафик">Трафик</SelectItem>
-                    <SelectItem value="Узнаваемость">Узнаваемость</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="startDate">Дата начала</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={newCampaign.startDate}
-                  onChange={(e) =>
-                    setNewCampaign({
-                      ...newCampaign,
-                      startDate: e.target.value,
-                    })
-                  }
-                />
+          <CardContent className="space-y-6">
+            {/* Основные данные */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Основные данные</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name">Название кампании *</Label>
+                  <Input
+                    id="name"
+                    value={newCampaign.name}
+                    onChange={(e) =>
+                      setNewCampaign({ ...newCampaign, name: e.target.value })
+                    }
+                    placeholder="Введите название"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="audience">Целевая аудитория</Label>
+                  <Input
+                    id="audience"
+                    value={newCampaign.audience}
+                    onChange={(e) =>
+                      setNewCampaign({
+                        ...newCampaign,
+                        audience: e.target.value,
+                      })
+                    }
+                    placeholder="Женщины 25-35"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="platform">Платформа *</Label>
+                  <Select
+                    value={newCampaign.platform}
+                    onValueChange={(value) =>
+                      setNewCampaign({ ...newCampaign, platform: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите платформу" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Facebook">Facebook</SelectItem>
+                      <SelectItem value="Instagram">Instagram</SelectItem>
+                      <SelectItem value="VK">VK</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="objective">Цель кампании *</Label>
+                  <Select
+                    value={newCampaign.objective}
+                    onValueChange={(value) =>
+                      setNewCampaign({ ...newCampaign, objective: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите цель" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Конверсии">Конверсии</SelectItem>
+                      <SelectItem value="Охват">Охват</SelectItem>
+                      <SelectItem value="Трафик">Трафик</SelectItem>
+                      <SelectItem value="Узнаваемость">Узнаваемость</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
+
+            {/* Период и бюджет */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Период и бюджет</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startDate">Дата начала</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={newCampaign.startDate}
+                    onChange={(e) => {
+                      setNewCampaign({
+                        ...newCampaign,
+                        startDate: e.target.value,
+                      });
+                      setTimeout(calculateBudget, 100);
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endDate">Дата окончания</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={newCampaign.endDate}
+                    onChange={(e) => {
+                      setNewCampaign({
+                        ...newCampaign,
+                        endDate: e.target.value,
+                      });
+                      setTimeout(calculateBudget, 100);
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dailyBudget">Дневной бюджет (₽)</Label>
+                  <Input
+                    id="dailyBudget"
+                    type="number"
+                    value={newCampaign.dailyBudget}
+                    onChange={(e) => {
+                      setNewCampaign({
+                        ...newCampaign,
+                        dailyBudget: e.target.value,
+                      });
+                      setTimeout(calculateBudget, 100);
+                    }}
+                    placeholder="1000"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="budget">Общий бюджет (₽) *</Label>
+                  <Input
+                    id="budget"
+                    type="number"
+                    value={newCampaign.budget}
+                    onChange={(e) =>
+                      setNewCampaign({ ...newCampaign, budget: e.target.value })
+                    }
+                    placeholder="25000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Расчет бюджета */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">
+                Автоматический расчет
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="targetCPA">Целевая цена конверсии (₽)</Label>
+                  <Input
+                    id="targetCPA"
+                    type="number"
+                    value={newCampaign.targetCPA}
+                    onChange={(e) => {
+                      setNewCampaign({
+                        ...newCampaign,
+                        targetCPA: e.target.value,
+                      });
+                      setTimeout(calculateBudget, 100);
+                    }}
+                    placeholder="500"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="expectedReach">Ожидаемые конверсии</Label>
+                  <Input
+                    id="expectedReach"
+                    type="number"
+                    value={newCampaign.expectedReach}
+                    onChange={(e) => {
+                      setNewCampaign({
+                        ...newCampaign,
+                        expectedReach: e.target.value,
+                      });
+                      setTimeout(calculateBudget, 100);
+                    }}
+                    placeholder="50"
+                  />
+                </div>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  💡 Бюджет рассчитывается автоматически на основе дневного
+                  бюджета и периода кампании, или на основе целевой цены
+                  конверсии и ожидаемого количества конверсий.
+                </p>
+              </div>
+            </div>
+
             <div className="flex space-x-2 pt-4">
-              <Button onClick={handleCreateCampaign}>Создать кампанию</Button>
+              <Button onClick={handleCreateCampaign}>
+                <Icon name="Plus" size={16} className="mr-2" />
+                Создать кампанию
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowCreateForm(false)}
