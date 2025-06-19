@@ -80,6 +80,12 @@ const CampaignManager = () => {
   ]);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  // Экспортируемая функция для открытия модального окна
+  const openCreateCampaignModal = () => {
+    setShowCreateForm(true);
+  };
+
   const [newCampaign, setNewCampaign] = useState({
     name: "",
     budget: "",
@@ -530,6 +536,15 @@ const CampaignManager = () => {
       </div>
     </div>
   );
+};
+
+// Экспортируем функцию для внешнего использования
+export const useCampaignManager = () => {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const openModal = () => setShowCreateForm(true);
+  const closeModal = () => setShowCreateForm(false);
+
+  return { showCreateForm, openModal, closeModal };
 };
 
 export default CampaignManager;
