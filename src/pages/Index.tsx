@@ -110,6 +110,16 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Заголовок */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            SMM Центр Управления
+          </h1>
+          <p className="text-lg text-gray-600">
+            Управление таргетированной рекламой и аналитика
+          </p>
+        </div>
+
         {/* Основные метрики */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
